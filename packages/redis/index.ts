@@ -8,8 +8,10 @@ const client = await createClient()
 
 type WebsiteEvent = { url: string; id: string };
 
-export async function xAdd({ url, id }: WebsiteEvent) {
-  await client.xAdd("monity:website", "*", {
+const STREAM_NAME = "monity:website";
+
+async function xAdd({ url, id }: WebsiteEvent) {
+  await client.xAdd(STREAM_NAME, "*", {
     url,
     id,
   });
@@ -22,4 +24,28 @@ export async function XAddBulk(websites: WebsiteEvent[]) {
       id: websites[i]!.id,
     });
   }
+}
+
+export async function XReadGroup(
+  consumerGroup: string,
+  workerId: string
+): Promise<any> {
+  const res = await client.XREADGROUP(
+    consumerGroup,
+    workerId,
+    {
+      key: STREAM_NAME,
+      id: ">",
+    },
+    {
+      COUNT: 5,
+    }
+  );
+  return res;
+}
+
+export async function xAck(cosnsumerGroup: string, StreamId: string) {
+  const res = await client.xAck(STREAM_NAME, cosnsumerGroup, StreamId);
+
+  return res;
 }
